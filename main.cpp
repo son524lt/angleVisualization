@@ -1,21 +1,20 @@
 #include <SDL2/SDL.h>
 #include <bits/stdc++.h>
 #include <windows.h>
+#include "main.h"
 SDL_Window* window{NULL};
 SDL_Renderer* renderer{NULL};
 
-// Serial communication setup
-HANDLE serialHandle; // Handle to the serial port
-DCB serialParams = {0}; // Structure to hold the serial port parameters
-COMMTIMEOUTS timeout = {0}; // Structure to hold the communication timeouts
-DWORD baudrate = CBR_9600; // Baud rate for serial communication
-BYTE byteSize = 8; // Number of data bits
-BYTE stopBits = ONESTOPBIT; // Number of stop bits
-BYTE parity = NOPARITY; // Parity type
+HANDLE serialHandle;
+DCB serialParams = {0};
+COMMTIMEOUTS timeout = {0};
+DWORD baudrate = CBR_115200;
+BYTE byteSize = 8;
+BYTE stopBits = ONESTOPBIT;
+BYTE parity = NOPARITY;
 
-
+imuData staticIMU, dynamicIMU;
 int main(int argc, char* args[]) {
-   // Serial port setup
    serialHandle = CreateFile("\\\\.\\COM6", GENERIC_READ | GENERIC_WRITE, 0, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
    serialParams.DCBlength = sizeof(serialParams);
    GetCommState(serialHandle, &serialParams);
@@ -24,8 +23,6 @@ int main(int argc, char* args[]) {
    serialParams.StopBits = stopBits;
    serialParams.Parity = parity;
    SetCommState(serialHandle, &serialParams);
-
-   // Communication timeouts setup
    timeout.ReadIntervalTimeout = 50;
    timeout.ReadTotalTimeoutConstant = 50;
    timeout.ReadTotalTimeoutMultiplier = 50;
@@ -63,21 +60,22 @@ int main(int argc, char* args[]) {
       SDL_RenderFillRect(renderer, &rect);
       SDL_RenderPresent(renderer);
       SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
-      SDL_RenderDrawLine(renderer, x, y, x + 300 * cos((angle+90) * M_PI / 180), y - 300 * sin((angle+90) * M_PI / 180));
+      SDL_RenderDrawLine(renderer, x, y, x + 500 * cos((angle+90) * M_PI / 180), y - 500 * sin((angle+90) * M_PI / 180));
       SDL_RenderPresent(renderer);
-      // SDL_Delay(10);
-      // read a floating number from the serial port
-      char buffer[1000];
+      // SDL_Delay(2);
+      
+      std::string buffer="";
       DWORD bytesRead;
-      ReadFile(serialHandle, buffer, 10, &bytesRead, NULL);
-      buffer[bytesRead] = '\0';
-      try {
-         angle = atof(buffer);
-      }
-      catch (std::exception e) {
-         // angle = 0;
-         std::cout << buffer << std::endl;
-      }
+      char temp;
+      do {
+         ReadFile(serialHandle, &temp, 1, &bytesRead, NULL);
+         buffer += temp;
+         std::cout << temp;
+      } while (temp != '\n');
+      buffer.pop_back();
+      // there are 7 float values in the buffer, add them to the imuData struct, the 3 first values are the dynamicIMU values (ax,ay,gz), the 3 next values are the staticIMU values (ax,az,gy), the last value is the angle
+      std::stringstream ss(buffer);
+      ss >> dynamicIMU.vAccel >> dynamicIMU.hAccel >> dynamicIMU.gyro >> staticIMU.vAccel >> staticIMU.hAccel >> staticIMU.gyro >> angle;
    }
 
    SDL_DestroyRenderer(renderer);
