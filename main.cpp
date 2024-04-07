@@ -44,7 +44,7 @@ int main(int argc, char* args[]) {
    SDL_Event event;
 
    int x = 1366 / 2, y = 768 - 50;
-   float angle = 0;
+   float angle = 0, accelAngle=0;
    while (!quit) {
       while (SDL_PollEvent(&event)) {
          if (event.type == SDL_QUIT)
@@ -59,10 +59,16 @@ int main(int argc, char* args[]) {
       SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
       SDL_RenderFillRect(renderer, &rect);
       SDL_RenderPresent(renderer);
+
+      SDL_SetRenderDrawColor(renderer, 255, 255, 0, 255);
+      SDL_RenderDrawLine(renderer, x, y, x + 500 * cos((accelAngle+90) * M_PI / 180), y - 500 * sin((accelAngle+90) * M_PI / 180));
+      SDL_RenderPresent(renderer);
+      
       SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
       SDL_RenderDrawLine(renderer, x, y, x + 500 * cos((angle+90) * M_PI / 180), y - 500 * sin((angle+90) * M_PI / 180));
       SDL_RenderPresent(renderer);
-      // SDL_Delay(2);
+
+      SDL_Delay(1);
       
       std::string buffer="";
       DWORD bytesRead;
@@ -75,7 +81,7 @@ int main(int argc, char* args[]) {
       buffer.pop_back();
       // there are 7 float values in the buffer, add them to the imuData struct, the 3 first values are the dynamicIMU values (ax,ay,gz), the 3 next values are the staticIMU values (ax,az,gy), the last value is the angle
       std::stringstream ss(buffer);
-      ss >> dynamicIMU.vAccel >> dynamicIMU.hAccel >> dynamicIMU.gyro >> staticIMU.vAccel >> staticIMU.hAccel >> staticIMU.gyro >> angle;
+      ss >> dynamicIMU.vAccel >> dynamicIMU.hAccel >> dynamicIMU.gyro >> staticIMU.vAccel >> staticIMU.hAccel >> staticIMU.gyro >> angle >> accelAngle;
    }
 
    SDL_DestroyRenderer(renderer);

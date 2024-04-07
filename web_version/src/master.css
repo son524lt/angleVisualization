@@ -1,0 +1,26 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+#display {
+    /* make this full screen */
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+#ipInput {
+    background-color: black;
+    color: white;
+    text-align: center;
+    width: 200px;
+}
+#submitButton {
+    margin-left: 300px;
+    background-color: black;
+    color: white;
+    text-align: center;
+    display: block;
+}
